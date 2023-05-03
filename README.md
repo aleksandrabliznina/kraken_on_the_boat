@@ -22,6 +22,25 @@ for ID in $(cat data/busco_manual/list_of_insects_with_busco); do
 done
 ```
 
+### Assembly ID to species
+
+```bash
+for ASMID in $(cat data/busco_manual/list_of_insects_with_busco); do 
+    echo "$ASMID"
+    echo -n "$ASMID, " >> data/busco_manual/list_of_species_with_taxonomy
+    esearch -db assembly -query "$ASMID" | elink -target taxonomy | efetch -format native -mode xml | grep ScientificName | awk -F ">|<" 'BEGIN{ORS=", ";}{print $3;}END{print("\n")}' >> data/busco_manual/list_of_species_with_taxonomy;
+done
+```
+
+This worked for most of them, but sometimes it just returns nothing (the API is not reliable). I rerun failed samples, for now, but in the future we should instead resolve taxonomy by querying GoaT
+
+```bash
+AMDID=GCA_927399515.1
+curl "https://goat.genomehubs.org/api/v2/search?query=tax_lineage%28queryA.taxon_id%29&queryA=assembly--assembly_id%3D"$ASMID"&result=taxon&includeEstimates=true&summaryValues=count&ranks=&taxonomy=ncbi&offset=0&size=50&fields=none&names="
+```
+
+returns a JSON with the full lineage (needs a bit postprocessing, but works well).
+
 ### exploring properties
 
 TODO: load k-mers into python as ID -> set of k-mers
